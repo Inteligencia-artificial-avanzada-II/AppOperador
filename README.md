@@ -1,0 +1,2 @@
+# AppOperador
+Aplicación del operador
