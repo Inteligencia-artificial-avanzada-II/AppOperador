@@ -1,14 +1,46 @@
 // src/screens/WelcomeScreen.js
-import React from "react";
+import { React, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import globalStyles from "../globalStyles";
+import axios from "axios";
+import { Ionicons } from "@expo/vector-icons";
+
 const WelcomeScreen = ({ navigation }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleLoging = async () => {
+    try {
+      const response = await axios.post(
+        "http://10.48.73.45:8080/contenedor/login",
+        {
+          userName: email,
+          contraseña: password,
+        }
+      );
+
+      if (response.data.data.isValid) {
+        navigation.navigate("QR");
+      } else {
+        Alert.alert("Error", response.data.message);
+      }
+    } catch (error) {
+      console.log("Error de la solicitud: ", error);
+      Alert.alert(
+        "Error",
+        "Las credenciales ingresadas son incorrectas o hubo un problema con el servidor"
+      );
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.containerBack}>
@@ -27,21 +59,31 @@ const WelcomeScreen = ({ navigation }) => {
         style={styles.input}
         placeholder="Ingresa tu correo"
         placeholderTextColor="#aaa"
+        value={email}
+        onChangeText={setEmail}
       />
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.inputPassword}
+          placeholder="Ingresa tu contraseña"
+          placeholderTextColor="#aaa"
+          secureTextEntry={!showPassword}
+          value={password}
+          onChangeText={setPassword}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Ingresa tu contraseña"
-        placeholderTextColor="#aaa"
-        secureTextEntry
-      />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Ionicons
+            name={showPassword ? "eye" : "eye-off"}
+            size={24}
+            color="#6A707C"
+          />
+        </TouchableOpacity>
+      </View>
 
       <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate("Waiting")}
-      >
+      <TouchableOpacity style={styles.button} onPress={handleLoging}>
         <Text style={[globalStyles.textBold, styles.buttonText]}>
           Iniciar Sesión
         </Text>
@@ -82,6 +124,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: "#f5f5f5",
     marginBottom: 15,
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    marginBottom: 15,
+  },
+  inputPassword: {
+    flex: 1,
+    padding: 15,
   },
   forgotPasswordText: {
     alignSelf: "flex-end",

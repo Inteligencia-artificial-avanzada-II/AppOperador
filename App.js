@@ -8,6 +8,7 @@ import WaitingScreen from "./src/screens/WaitingScreen";
 import GoToScreen from "./src/screens/GoToScreen";
 import UnloadingScreen from "./src/screens/UnloadingScreen";
 import UnloadedScreen from "./src/screens/UnloadedScreen";
+import QRScan from "./src/screens/QRScanScreen";
 
 const Stack = createStackNavigator();
 
@@ -17,6 +18,7 @@ export default function App() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
+        <Stack.Screen name="QR" component={QRScan} />
         <Stack.Screen name="Waiting" component={WaitingScreen} />
         <Stack.Screen name="GoTo" component={GoToScreen} />
         <Stack.Screen name="Unloading" component={UnloadingScreen} />
