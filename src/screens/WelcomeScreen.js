@@ -20,7 +20,7 @@ const WelcomeScreen = ({ navigation }) => {
   const handleLoging = async () => {
     try {
       const response = await axios.post(
-        "http://10.48.73.45:8080/contenedor/login",
+        "http://159.54.147.172:8080/contenedor/login",
         {
           userName: email,
           contraseña: password,
