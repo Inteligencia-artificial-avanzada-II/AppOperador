@@ -1,21 +1,54 @@
-import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+// src/screens/QRScan.js
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getQRCodeUrl } from "../services/QRCodeService";
+import { BUCKET_URL } from "@env";
 
 const QRScan = ({ navigation }) => {
+  const [qrImageUrl, setQrImageUrl] = useState("");
+
+  useEffect(() => {
+    const fetchQRCode = async () => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        const idContenedor = await AsyncStorage.getItem("idContenedor");
+
+        if (!token || !idContenedor) {
+          Alert.alert("Error", "No se encontró información de autenticación.");
+          return;
+        }
+
+        // Obtén el idOrden y construye la URL de la imagen
+        const idOrden = await getQRCodeUrl(token, idContenedor);
+        const url = `${BUCKET_URL}${idOrden}.png`;
+        console.log("URL: ", url);
+        setQrImageUrl(url);
+      } catch (error) {
+        Alert.alert("Error", "No se pudo cargar el código QR.");
+      }
+    };
+
+    fetchQRCode();
+  }, []);
+
   return (
     <View style={styles.container}>
-      {/* Título de la pantalla */}
       <Text style={styles.title}>Escanear QR</Text>
 
-      {/* Imagen del Código QR */}
-      <Image
-        source={{
-          uri: "https://objectstorage.mx-queretaro-1.oraclecloud.com/p/79AJJfgFXexqbvQZWz9MJ_7qJ9xLb94V9XhEAGlRZJbwkfxL1F7gZP9EOHseYtm8/n/axnhu2vnql31/b/qrprueba/o/1730423946314_qrcode.png",
-        }} // Reemplaza esta URL con la de tu imagen QR
-        style={styles.qrImage}
-      />
+      {qrImageUrl ? (
+        <Image source={{ uri: qrImageUrl }} style={styles.qrImage} />
+      ) : (
+        <Text>Cargando QR...</Text>
+      )}
 
-      {/* Botón para pasar a la siguiente pantalla */}
       <TouchableOpacity
         style={styles.buttonContainer}
         onPress={() => navigation.navigate("Waiting")}
@@ -43,7 +76,7 @@ const styles = StyleSheet.create({
   qrImage: {
     width: 200,
     height: 200,
-    marginBottom: 50, // Aumenta el margen inferior para espaciar más la imagen del botón
+    marginBottom: 50,
   },
   buttonContainer: {
     backgroundColor: "#0033cc",

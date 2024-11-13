@@ -1,5 +1,5 @@
 // src/screens/WelcomeScreen.js
-import { React, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,8 +9,9 @@ import {
   Alert,
 } from "react-native";
 import globalStyles from "../globalStyles";
-import axios from "axios";
 import { Ionicons } from "@expo/vector-icons";
+import { loginContenedor } from "../services/AuthService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const WelcomeScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
@@ -19,18 +20,21 @@ const WelcomeScreen = ({ navigation }) => {
 
   const handleLoging = async () => {
     try {
-      const response = await axios.post(
-        "http://159.54.147.172:8080/contenedor/login",
-        {
-          userName: email,
-          contraseña: password,
-        }
-      );
+      const data = await loginContenedor(email, password);
+      console.log("Data: ", data);
 
-      if (response.data.data.isValid) {
+      if (data.data.isValid) {
+        console.log("Token: ", data.data.token);
+        const token = data.data.token;
+        const idContenedor = data.data.idContenedor;
+
+        // Guarda el token y el idContenedor en AsyncStorage
+        await AsyncStorage.setItem("userToken", token);
+        await AsyncStorage.setItem("idContenedor", String(idContenedor));
+
         navigation.navigate("QR");
       } else {
-        Alert.alert("Error", response.data.message);
+        Alert.alert("Error", data.message);
       }
     } catch (error) {
       console.log("Error de la solicitud: ", error);
