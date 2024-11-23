@@ -1,7 +1,43 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { actualizarStatusContenedor } from "../services/ActualizarStatusService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const GoToScreen = ({ navigation }) => {
+  const handleDescargar = async () => {
+    try {
+      
+      const idContenedor = await AsyncStorage.getItem("idContenedor");
+
+      if (!idContenedor) {
+        Alert.alert("Error", "No se encontró un ID de contenedor válido.");
+        return;
+      }
+
+      const nuevoStatus = "Descargando"; 
+
+      
+      const response = await actualizarStatusContenedor(
+        idContenedor,
+        nuevoStatus
+      );
+      Alert.alert(
+        "Éxito",
+        "El estado del contenedor se actualizó a Descargando."
+      );
+      console.log("Respuesta de la API:", response);
+
+      // Navegar a la pantalla de descarga
+      navigation.navigate("Unloading");
+    } catch (error) {
+      console.error("Error al actualizar el estado:", error);
+      Alert.alert(
+        "Error",
+        "Hubo un problema al actualizar el estado del contenedor."
+      );
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Contenedor para el título y el número de placas */}
@@ -21,7 +57,7 @@ const GoToScreen = ({ navigation }) => {
       {/* Botón de Descargar */}
       <TouchableOpacity
         style={styles.buttonContainer}
-        onPress={() => navigation.navigate("Unloading")}
+        onPress={handleDescargar}
       >
         <Text style={styles.buttonText}>Descargando</Text>
       </TouchableOpacity>

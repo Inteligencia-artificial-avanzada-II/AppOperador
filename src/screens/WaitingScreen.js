@@ -1,31 +1,186 @@
-import React, { useEffect } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Keyboard,
+  Animated,
+  TouchableWithoutFeedback,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import { BlurView } from "expo-blur";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { consultarPuerta } from "../services/ConsultarPuertaService";
+import { actualizarStatusContenedor } from "../services/ActualizarStatusService";
 
 const WaitingScreen = ({ navigation }) => {
-  useEffect(() => {
-    // Configurar un temporizador para navegar a GoToScreen después de 15 segundos
-    const timer = setTimeout(() => {
-      navigation.navigate("GoTo"); // Cambia "GoTo" por el nombre correcto de la pantalla en tu stack
-    }, 15000); // 15000 milisegundos = 15 segundos
+  const [inputText, setInputText] = useState("");
+  const [puerta, setPuerta] = useState("Sin Asignar"); // Estado inicial para mostrar la puerta
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const keyboardOffset = useRef(new Animated.Value(0)).current; // Animación para el movimiento
+  const blurOpacity = useRef(new Animated.Value(0)).current; // Animación para el desenfoque
 
-    // Limpiar el temporizador si el componente se desmonta antes de los 15 segundos
-    return () => clearTimeout(timer);
-  }, [navigation]);
+  useEffect(() => {
+    const fetchPuerta = async () => {
+      try {
+        const idContenedor = await AsyncStorage.getItem("idContenedor");
+        const token = await AsyncStorage.getItem("userToken");
+        if (!idContenedor) {
+          Alert.alert("Error", "No se encontró un ID de contenedor válido.");
+          return;
+        }
+
+        const response = await consultarPuerta(token, idContenedor); // Consultar la puerta
+        console.log("Respuesta de la API:", response);
+        // Si hay idPuerta, mostrar el número; si no, mantener "Sin Asignar"
+        setPuerta(response.idPuerta ? `${response.idPuerta}` : "Sin Asignar");
+      } catch (error) {
+        console.error("Error al consultar la puerta:", error);
+        Alert.alert("Error", "Hubo un problema al consultar la puerta.");
+        setPuerta("Sin Asignar"); // Si falla, mostrar "Sin Asignar"
+      }
+    };
+
+    fetchPuerta();
+  }, []);
+
+  useEffect(() => {
+    // Mostrar el teclado
+    const keyboardShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      (e) => {
+        setIsKeyboardVisible(true);
+        Animated.parallel([
+          Animated.timing(keyboardOffset, {
+            toValue: -e.endCoordinates.height + 50,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(blurOpacity, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }
+    );
+
+    // Ocultar el teclado
+    const keyboardHideListener = Keyboard.addListener("keyboardDidHide", () => {
+      Animated.parallel([
+        Animated.timing(keyboardOffset, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(blurOpacity, {
+          toValue: 0, // Desactiva el desenfoque
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start(() => setIsKeyboardVisible(false));
+    });
+
+    return () => {
+      keyboardShowListener.remove();
+      keyboardHideListener.remove();
+    };
+  }, [keyboardOffset, blurOpacity]);
+
+  const handleNext = async () => {
+    try {
+      const idContenedor = await AsyncStorage.getItem("idContenedor");
+      const token = await AsyncStorage.getItem("userToken");
+      if (!idContenedor || !token) {
+        Alert.alert(
+          "Error",
+          "No se encontró un ID de contenedor válido o un token."
+        );
+        return;
+      }
+
+      const nuevoStatus = "Descargando";
+
+      // Llamar a la API para actualizar el estado
+      const response = await actualizarStatusContenedor(
+        token,
+        idContenedor,
+        nuevoStatus
+      );
+      console.log("Respuesta de la API:", response);
+
+      // Navegar a la siguiente pantalla
+      navigation.navigate("Unloading");
+    } catch (error) {
+      console.error("Error al actualizar el estado:", error);
+      Alert.alert(
+        "Error",
+        "Hubo un problema al actualizar el estado del contenedor."
+      );
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      {/* Contenedor para el título y el número de placas */}
-      <View style={styles.headerContainer}>
-        <Text style={styles.title}>En espera</Text>
-        <Text style={styles.plateNumber}>#Placas</Text>
-      </View>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        {/* BlurView animado para el desenfoque */}
+        {isKeyboardVisible && (
+          <Animated.View
+            style={[
+              styles.blurContainer,
+              { opacity: blurOpacity }, // Cambia la opacidad del desenfoque
+            ]}
+          >
+            <BlurView intensity={50} style={styles.blurView} />
+          </Animated.View>
+        )}
 
-      {/* Contenedor para la información de la puerta */}
-      <View style={styles.infoContainer}>
-        <Text style={styles.infoText}>Puerta</Text>
-        <Text style={styles.infoTextBold}>Sin Asignar</Text>
+        {/* Contenedor para el título y el número de placas */}
+        <View style={styles.headerContainer}>
+          <Text style={styles.title}>En espera</Text>
+          <Text style={styles.plateNumber}>#Placas</Text>
+        </View>
+
+        {/* Contenedor para la información de la puerta */}
+        <View style={styles.infoContainer}>
+          <Text style={styles.infoText}>Puerta</Text>
+          <Text style={styles.infoTextBold}>{puerta}</Text>
+        </View>
+
+        {/* Mostrar el campo de entrada solo si no hay puerta */}
+        {puerta === "Sin Asignar" && (
+          <Animated.View
+            style={[
+              styles.inputContainer,
+              { transform: [{ translateY: keyboardOffset }] },
+            ]}
+          >
+            <Text style={styles.instructionText}>
+              Especifica el lugar donde se dejó el contenedor
+            </Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Ingresa el lugar aquí"
+              value={inputText}
+              onChangeText={setInputText}
+              multiline={true}
+              scrollEnabled={true}
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          </Animated.View>
+        )}
+
+        {/* Mostrar botón si hay puerta asignada */}
+        {puerta !== "Sin Asignar" && (
+          <TouchableOpacity style={styles.buttonContainer} onPress={handleNext}>
+            <Text style={styles.buttonText}>Siguiente</Text>
+          </TouchableOpacity>
+        )}
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -37,6 +192,14 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     alignItems: "center",
     paddingTop: 150,
+  },
+  blurContainer: {
+    ...StyleSheet.absoluteFillObject, // Ocupa toda la pantalla
+    zIndex: 1, // Asegura que el desenfoque esté encima
+  },
+  blurView: {
+    flex: 1,
+    ...StyleSheet.absoluteFillObject,
   },
   headerContainer: {
     flexDirection: "row",
@@ -60,7 +223,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 100,
     borderRadius: 10,
     alignItems: "center",
-    marginTop: 50,
+    marginTop: 70,
   },
   infoText: {
     fontSize: 24,
@@ -71,6 +234,42 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#000",
+  },
+  inputContainer: {
+    marginTop: 80,
+    width: "100%",
+    alignItems: "center",
+    zIndex: 2,
+  },
+  textInput: {
+    width: "90%",
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    backgroundColor: "#fff",
+    minHeight: 100,
+  },
+  instructionText: {
+    fontSize: 16,
+    marginBottom: 10,
+    color: "#0033cc",
+  },
+  buttonContainer: {
+    position: "absolute",
+    bottom: 100,
+    backgroundColor: "#0033cc",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    width: "80%",
+    alignSelf: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 
