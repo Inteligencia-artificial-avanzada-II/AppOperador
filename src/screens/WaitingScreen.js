@@ -34,8 +34,15 @@ const WaitingScreen = ({ navigation }) => {
 
         const response = await consultarPuerta(token, idContenedor); // Consultar la puerta
         console.log("Respuesta de la API:", response);
+
         // Si hay idPuerta, mostrar el número; si no, mantener "Sin Asignar"
-        setPuerta(response.idPuerta ? `${response.idPuerta}` : "Sin Asignar");
+        if (response.idPuerta) {
+          setPuerta(`${response.idPuerta}`);
+          await AsyncStorage.setItem("idPuerta", String(response.idPuerta)); // Guardar idPuerta
+          console.log("idPuerta guardado en AsyncStorage:", response.idPuerta);
+        } else {
+          setPuerta("Sin Asignar");
+        }
       } catch (error) {
         console.error("Error al consultar la puerta:", error);
         Alert.alert("Error", "Hubo un problema al consultar la puerta.");
