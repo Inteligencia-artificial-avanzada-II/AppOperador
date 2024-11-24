@@ -1,4 +1,3 @@
-// src/screens/WelcomeScreen.js
 import React, { useState } from "react";
 import {
   View,
@@ -12,6 +11,7 @@ import globalStyles from "../globalStyles";
 import { Ionicons } from "@expo/vector-icons";
 import { loginContenedor } from "../services/AuthService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { connectSocket } from "../services/socket"; // Importa la función para conectar el socket
 
 const WelcomeScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
@@ -32,6 +32,13 @@ const WelcomeScreen = ({ navigation }) => {
         await AsyncStorage.setItem("userToken", token);
         await AsyncStorage.setItem("idContenedor", String(idContenedor));
 
+        const socketContenedor = String("contenedor-" + idContenedor);
+        console.log("Socket: ", socketContenedor);
+
+        // Conecta el socket utilizando el idContenedor
+        connectSocket(socketContenedor);
+
+        // Navega a la pantalla QR
         navigation.navigate("QR");
       } else {
         Alert.alert("Error", data.message);
