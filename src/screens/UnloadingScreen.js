@@ -1,20 +1,48 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const UnloadingScreen = ({ navigation }) => {
+  const [idOrden, setIdOrden] = useState("#Placas");
+  const [idPuerta, setIdPuerta] = useState("Sin Asignar");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const storedIdOrden = await AsyncStorage.getItem("idOrden");
+        const storedIdPuerta = await AsyncStorage.getItem("idPuerta");
+
+        if (storedIdOrden) {
+          setIdOrden(storedIdOrden);
+          console.log("idOrden cargado desde AsyncStorage:", storedIdOrden);
+        }
+
+        if (storedIdPuerta) {
+          setIdPuerta(storedIdPuerta);
+          console.log("idPuerta cargado desde AsyncStorage:", storedIdPuerta);
+        }
+      } catch (error) {
+        console.error("Error al cargar datos de AsyncStorage:", error);
+        Alert.alert("Error", "Hubo un problema al cargar los datos.");
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <View style={styles.container}>
       {/* Contenedor para el título y el número de placas */}
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Descargando en</Text>
-        <Text style={styles.plateNumber}>#Placas</Text>
+        <Text style={styles.plateNumber}>{idOrden}</Text>
       </View>
 
       {/* Contenedor para la información de la puerta */}
       <View style={styles.infoContainer}>
         <Text style={styles.infoText}>Puerta</Text>
         <View style={styles.circle}>
-          <Text style={styles.circleText}>3</Text>
+          <Text style={styles.circleText}>{idPuerta}</Text>
         </View>
       </View>
 

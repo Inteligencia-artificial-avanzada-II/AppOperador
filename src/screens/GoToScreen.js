@@ -4,9 +4,31 @@ import { actualizarStatusContenedor } from "../services/ActualizarStatusService"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const GoToScreen = ({ navigation }) => {
+  const [idOrden, setIdOrden] = useState("");
+  const [idPuerta, setIdPuerta] = useState("");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const storedIdOrden = await AsyncStorage.getItem("idOrden");
+        const storedIdPuerta = await AsyncStorage.getItem("idPuerta");
+
+        if (storedIdOrden) setIdOrden(storedIdOrden);
+        if (storedIdPuerta) setIdPuerta(storedIdPuerta);
+      } catch (error) {
+        console.error("Error al cargar datos de AsyncStorage:", error);
+        Alert.alert(
+          "Error",
+          "No se pudo cargar la información de la orden o puerta."
+        );
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const handleDescargar = async () => {
     try {
-      
       const idContenedor = await AsyncStorage.getItem("idContenedor");
 
       if (!idContenedor) {
@@ -14,9 +36,8 @@ const GoToScreen = ({ navigation }) => {
         return;
       }
 
-      const nuevoStatus = "Descargando"; 
+      const nuevoStatus = "Descargando";
 
-      
       const response = await actualizarStatusContenedor(
         idContenedor,
         nuevoStatus
@@ -43,14 +64,18 @@ const GoToScreen = ({ navigation }) => {
       {/* Contenedor para el título y el número de placas */}
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Dirigirse a</Text>
-        <Text style={styles.plateNumber}>#Placas</Text>
+        <Text style={styles.plateNumber}>
+          {idOrden ? `# ${idOrden}` : "#Placas"}
+        </Text>
       </View>
 
       {/* Contenedor para la información de la puerta */}
       <View style={styles.infoContainer}>
         <Text style={styles.infoText}>Puerta</Text>
         <View style={styles.circle}>
-          <Text style={styles.circleText}>3</Text>
+          <Text style={styles.circleText}>
+            {idPuerta ? idPuerta : "Sin Asignar"}
+          </Text>
         </View>
       </View>
 
