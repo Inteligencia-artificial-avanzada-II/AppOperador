@@ -31,6 +31,9 @@ const QRScan = ({ navigation }) => {
         const url = `${BUCKET_URL}${idOrden}.png`;
         console.log("URL: ", url);
         setQrImageUrl(url);
+
+        await AsyncStorage.setItem("idOrden", String(idOrden));
+        console.log("idOrden guardado en AsyncStorage:", idOrden);
       } catch (error) {
         Alert.alert("Error", "No se pudo cargar el código QR.");
       }
