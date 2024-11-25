@@ -24,7 +24,7 @@ const WaitingScreen = ({ navigation }) => {
   const blurOpacity = useRef(new Animated.Value(0)).current; // Animación para el desenfoque
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchPuerta = async () => {
       try {
         const idContenedor = await AsyncStorage.getItem("idContenedor");
         const token = await AsyncStorage.getItem("userToken");
@@ -54,13 +54,13 @@ const WaitingScreen = ({ navigation }) => {
           setPuerta("Sin Asignar");
         }
       } catch (error) {
-        console.error("Error al consultar la puerta o idOrden:", error);
-        Alert.alert("Error", "Hubo un problema al cargar los datos.");
+        console.error("Error al consultar la puerta:", error);
+        Alert.alert("Error", "Hubo un problema al consultar la puerta.");
         setPuerta("Sin Asignar"); // Si falla, mostrar "Sin Asignar"
       }
     };
 
-    fetchData();
+    fetchPuerta();
   }, []);
 
   useEffect(() => {
