@@ -1,27 +1,50 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { actualizarOcupado } from "../services/ActualizarOcupado";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const UnloadingScreen = ({ navigation }) => {
+  const idPuerta = AsyncStorage.getItem("idPuerta"); // O el valor que necesites para `idPuerta`
+  const handleDescargar = async () => {
+    try {
+      const token = await AsyncStorage.getItem("userToken"); // Asegúrate de que el token esté almacenado
+      if (!token) {
+        Alert.alert("Error", "No se encontró el token de autenticación.");
+        return;
+      }
+
+      const idPuerta = await AsyncStorage.getItem("idPuerta");
+      const idOrden = await AsyncStorage.getItem("idOrden");
+      const idContenedor = await AsyncStorage.getItem("idContenedor");
+      const status = "Disponible"; // O el valor que necesites para `status`
+
+      await actualizarOcupado(token, idPuerta, idOrden, idContenedor, status);
+
+      Alert.alert("Éxito", "La descarga se ha registrado correctamente.");
+      navigation.navigate("Unloaded"); // Navega a la siguiente pantalla
+    } catch (error) {
+      Alert.alert("Error", "Hubo un problema al actualizar el estado.");
+      console.error("Error en handleDescargar:", error);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      {/* Contenedor para el título y el número de placas */}
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Descargando en</Text>
         <Text style={styles.plateNumber}>#Placas</Text>
       </View>
 
-      {/* Contenedor para la información de la puerta */}
       <View style={styles.infoContainer}>
         <Text style={styles.infoText}>Puerta</Text>
         <View style={styles.circle}>
-          <Text style={styles.circleText}>3</Text>
+          <Text style={styles.circleText}>{idPuerta}</Text>
         </View>
       </View>
 
-      {/* Botón de Descargar */}
       <TouchableOpacity
         style={styles.buttonContainer}
-        onPress={() => navigation.navigate("Unloaded")}
+        onPress={handleDescargar}
       >
         <Text style={styles.buttonText}>Descargado</Text>
       </TouchableOpacity>

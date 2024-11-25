@@ -1,10 +1,11 @@
-// socket.js
 import { io } from "socket.io-client";
+import { Alert } from "react-native";
+import { BASE_URL } from "@env";
 
 let socket;
 
 export const connectSocket = (uniqueId) => {
-  socket = io("http://159.54.147.172:8080", {
+  socket = io(BASE_URL, {
     reconnection: true,
     reconnectionAttempts: 5,
     reconnectionDelay: 2000,
@@ -22,6 +23,13 @@ export const connectSocket = (uniqueId) => {
 
   socket.on("puertaDesocupada", (data) => {
     console.log(`Evento 'puertaDesocupada' recibido:`, data);
+
+    // Mostrar una alerta al usuario
+    Alert.alert(
+      "Puerta Desocupada",
+      `La puerta ${data.idPuerta} ahora está disponible.`,
+      [{ text: "OK", onPress: () => console.log("Alerta cerrada") }]
+    );
   });
 
   socket.on("disconnect", () => {
