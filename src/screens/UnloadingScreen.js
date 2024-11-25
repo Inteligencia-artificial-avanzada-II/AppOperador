@@ -4,7 +4,33 @@ import { actualizarOcupado } from "../services/ActualizarOcupado";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const UnloadingScreen = ({ navigation }) => {
-  const idPuerta = AsyncStorage.getItem("idPuerta"); // O el valor que necesites para `idPuerta`
+  const [idOrden, setIdOrden] = useState("#Placas");
+  const [idPuerta, setIdPuerta] = useState("Sin Asignar");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const storedIdOrden = await AsyncStorage.getItem("idOrden");
+        const storedIdPuerta = await AsyncStorage.getItem("idPuerta");
+
+        if (storedIdOrden) {
+          setIdOrden(storedIdOrden);
+          console.log("idOrden cargado desde AsyncStorage:", storedIdOrden);
+        }
+
+        if (storedIdPuerta) {
+          setIdPuerta(storedIdPuerta);
+          console.log("idPuerta cargado desde AsyncStorage:", storedIdPuerta);
+        }
+      } catch (error) {
+        console.error("Error al cargar datos de AsyncStorage:", error);
+        Alert.alert("Error", "Hubo un problema al cargar los datos.");
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const handleDescargar = async () => {
     try {
       const token = await AsyncStorage.getItem("userToken"); // Asegúrate de que el token esté almacenado
@@ -32,7 +58,7 @@ const UnloadingScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Descargando en</Text>
-        <Text style={styles.plateNumber}>#Placas</Text>
+        <Text style={styles.plateNumber}>{idOrden}</Text>
       </View>
 
       <View style={styles.infoContainer}>

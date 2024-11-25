@@ -18,21 +18,31 @@ import { actualizarStatusContenedor } from "../services/ActualizarStatusService"
 const WaitingScreen = ({ navigation }) => {
   const [inputText, setInputText] = useState("");
   const [puerta, setPuerta] = useState("Sin Asignar"); // Estado inicial para mostrar la puerta
+  const [idOrden, setIdOrden] = useState(""); // Estado inicial para idOrden
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const keyboardOffset = useRef(new Animated.Value(0)).current; // Animación para el movimiento
   const blurOpacity = useRef(new Animated.Value(0)).current; // Animación para el desenfoque
 
   useEffect(() => {
-    const fetchPuerta = async () => {
+    const fetchData = async () => {
       try {
         const idContenedor = await AsyncStorage.getItem("idContenedor");
         const token = await AsyncStorage.getItem("userToken");
+        const storedIdOrden = await AsyncStorage.getItem("idOrden"); // Obtén idOrden desde AsyncStorage
+
         if (!idContenedor) {
           Alert.alert("Error", "No se encontró un ID de contenedor válido.");
           return;
         }
 
-        const response = await consultarPuerta(token, idContenedor); // Consultar la puerta
+        // Asignar idOrden si existe
+        if (storedIdOrden) {
+          setIdOrden(storedIdOrden);
+          console.log("idOrden cargado desde AsyncStorage:", storedIdOrden);
+        }
+
+        // Consultar la puerta
+        const response = await consultarPuerta(token, idContenedor);
         console.log("Respuesta de la API:", response);
 
         // Si hay idPuerta, mostrar el número; si no, mantener "Sin Asignar"
@@ -44,13 +54,13 @@ const WaitingScreen = ({ navigation }) => {
           setPuerta("Sin Asignar");
         }
       } catch (error) {
-        console.error("Error al consultar la puerta:", error);
-        Alert.alert("Error", "Hubo un problema al consultar la puerta.");
+        console.error("Error al consultar la puerta o idOrden:", error);
+        Alert.alert("Error", "Hubo un problema al cargar los datos.");
         setPuerta("Sin Asignar"); // Si falla, mostrar "Sin Asignar"
       }
     };
 
-    fetchPuerta();
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -147,7 +157,9 @@ const WaitingScreen = ({ navigation }) => {
         {/* Contenedor para el título y el número de placas */}
         <View style={styles.headerContainer}>
           <Text style={styles.title}>En espera</Text>
-          <Text style={styles.plateNumber}>#Placas</Text>
+          <Text style={styles.plateNumber}>
+            {idOrden ? `Orden: ${idOrden}` : "#Placas"}
+          </Text>
         </View>
 
         {/* Contenedor para la información de la puerta */}
