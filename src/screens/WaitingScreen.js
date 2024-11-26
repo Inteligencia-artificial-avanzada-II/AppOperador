@@ -14,6 +14,7 @@ import { BlurView } from "expo-blur";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { consultarPuerta } from "../services/ConsultarPuertaService";
 import { actualizarStatusContenedor } from "../services/ActualizarStatusService";
+import { Ionicons } from "@expo/vector-icons";
 
 const WaitingScreen = ({ navigation }) => {
   const [inputText, setInputText] = useState("");
@@ -55,7 +56,7 @@ const WaitingScreen = ({ navigation }) => {
         }
       } catch (error) {
         console.error("Error al consultar la puerta o idOrden:", error);
-        Alert.alert("Error", "Hubo un problema al cargar los datos.");
+
         setPuerta("Sin Asignar"); // Si falla, mostrar "Sin Asignar"
       }
     };
@@ -106,6 +107,11 @@ const WaitingScreen = ({ navigation }) => {
     };
   }, [keyboardOffset, blurOpacity]);
 
+  const handleSeparation = () => {
+    Alert.alert("Notificación", "El camión se separó de la caja.");
+    console.log("El camión se separó de la caja.");
+  };
+
   const handleNext = async () => {
     try {
       const idContenedor = await AsyncStorage.getItem("idContenedor");
@@ -139,6 +145,11 @@ const WaitingScreen = ({ navigation }) => {
     }
   };
 
+  const handleSendMessage = () => {
+    Alert.alert("Mensaje enviado", inputText || "Sin mensaje ingresado");
+    setInputText(""); // Limpiar el texto después de enviar
+  };
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
@@ -158,7 +169,7 @@ const WaitingScreen = ({ navigation }) => {
         <View style={styles.headerContainer}>
           <Text style={styles.title}>En espera</Text>
           <Text style={styles.plateNumber}>
-            {idOrden ? `Orden: ${idOrden}` : "#Placas"}
+            {idOrden ? `Orden: ${idOrden}` : ""}
           </Text>
         </View>
 
@@ -179,16 +190,31 @@ const WaitingScreen = ({ navigation }) => {
             <Text style={styles.instructionText}>
               Especifica el lugar donde se dejó el contenedor
             </Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Ingresa el lugar aquí"
-              value={inputText}
-              onChangeText={setInputText}
-              multiline={true}
-              scrollEnabled={true}
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
+            <View style={styles.inputWithIconContainer}>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Ingresa el lugar aquí"
+                value={inputText}
+                onChangeText={setInputText}
+                multiline={true}
+                scrollEnabled={true}
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+              <TouchableOpacity onPress={handleSendMessage}>
+                <Ionicons name="send" size={24} color="#0033cc" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Botón adicional cuando se muestra el input */}
+            <TouchableOpacity
+              style={[styles.secondButtonContainer, { marginTop: 20 }]}
+              onPress={handleSeparation}
+            >
+              <Text style={styles.buttonText}>
+                El camión dejó el contenedor
+              </Text>
+            </TouchableOpacity>
           </Animated.View>
         )}
 
@@ -261,23 +287,36 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   textInput: {
-    width: "90%",
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
+    flex: 1,
     fontSize: 16,
-    backgroundColor: "#fff",
-    minHeight: 100,
   },
   instructionText: {
-    fontSize: 16,
+    fontSize: 15,
     marginBottom: 10,
     color: "#0033cc",
+    fontWeight: "bold",
+  },
+  inputWithIconContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "90%",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    backgroundColor: "#fff",
   },
   buttonContainer: {
     position: "absolute",
     bottom: 100,
+    backgroundColor: "#0033cc",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    width: "80%",
+    alignSelf: "center",
+  },
+  secondButtonContainer: {
     backgroundColor: "#0033cc",
     padding: 15,
     borderRadius: 10,
