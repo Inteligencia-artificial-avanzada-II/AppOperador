@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { actualizarOcupado } from "../services/ActualizarOcupado";
 import AsyncStorage from "@react-native-async-storage/async-storage";
