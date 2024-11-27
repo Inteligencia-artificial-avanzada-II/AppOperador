@@ -15,6 +15,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { consultarPuerta } from "../services/ConsultarPuertaService";
 import { actualizarStatusContenedor } from "../services/ActualizarStatusService";
 import { Ionicons } from "@expo/vector-icons";
+import { guardarPosicionPatio } from "../services/GuardarLugarPatioService";
+import { actualizarCamion } from "../services/ActualizarCamionService";
 
 const WaitingScreen = ({ navigation }) => {
   const [inputText, setInputText] = useState("");
@@ -55,8 +57,6 @@ const WaitingScreen = ({ navigation }) => {
           setPuerta("Sin Asignar");
         }
       } catch (error) {
-        console.error("Error al consultar la puerta o idOrden:", error);
-
         setPuerta("Sin Asignar"); // Si falla, mostrar "Sin Asignar"
       }
     };
@@ -107,9 +107,30 @@ const WaitingScreen = ({ navigation }) => {
     };
   }, [keyboardOffset, blurOpacity]);
 
-  const handleSeparation = () => {
-    Alert.alert("Notificación", "El camión se separó de la caja.");
-    console.log("El camión se separó de la caja.");
+  const handleSeparation = async () => {
+    try {
+      const idOrden = await AsyncStorage.getItem("idOrden");
+      if (!idOrden) {
+        Alert.alert("Error", "No se encontró el ID de la orden.");
+        console.error("ID de orden no encontrado en AsyncStorage.");
+        return;
+      }
+
+      // Llamar a la API para actualizar el camión
+      const response = await actualizarCamion(idOrden);
+      console.log("Respuesta de la API de actualizar camión:", response);
+
+      Alert.alert("Éxito", "El camión se separó correctamente.");
+    } catch (error) {
+      console.error(
+        "Error al actualizar el camión:",
+        error.response?.data || error.message
+      );
+      Alert.alert(
+        "Error",
+        "Hubo un problema al actualizar el estado del camión. Intenta nuevamente."
+      );
+    }
   };
 
   const handleNext = async () => {
@@ -145,9 +166,49 @@ const WaitingScreen = ({ navigation }) => {
     }
   };
 
-  const handleSendMessage = () => {
-    Alert.alert("Mensaje enviado", inputText || "Sin mensaje ingresado");
-    setInputText(""); // Limpiar el texto después de enviar
+  const handleSendMessage = async () => {
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      const idOrden = await AsyncStorage.getItem("idOrden");
+      const posicionPatio = inputText.trim();
+
+      // Validar inputs
+      if (!token) {
+        Alert.alert("Error", "No se encontró el token.");
+        console.error("Token no encontrado en AsyncStorage.");
+        return;
+      }
+      if (!idOrden) {
+        Alert.alert("Error", "No se encontró el ID de la orden.");
+        console.error("ID de orden no encontrado en AsyncStorage.");
+        return;
+      }
+      if (!posicionPatio) {
+        Alert.alert("Error", "El campo de posición del patio está vacío.");
+        console.error("Campo de posición de patio vacío.");
+        return;
+      }
+
+      // Llamar a la API
+      const response = await guardarPosicionPatio(
+        token,
+        idOrden,
+        posicionPatio
+      );
+      console.log("Respuesta de la API:", response);
+
+      Alert.alert("Éxito", "La posición del patio se guardó correctamente.");
+      setInputText(""); // Limpiar el campo de texto
+    } catch (error) {
+      console.error(
+        "Error al guardar la posición del patio:",
+        error.response?.data || error.message
+      );
+      Alert.alert(
+        "Error",
+        "Hubo un problema al enviar la posición del patio. Intenta nuevamente."
+      );
+    }
   };
 
   return (
