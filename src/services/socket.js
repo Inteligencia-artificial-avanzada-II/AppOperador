@@ -28,7 +28,15 @@ export const connectSocket = (uniqueId) => {
     Alert.alert(
       "Puerta Desocupada",
       `La puerta ${data.idPuerta} ahora está disponible.`,
-      [{ text: "OK", onPress: () => console.log("Alerta cerrada") }]
+      [
+        {
+          text: "OK",
+          onPress: () => {
+            console.log("Recargando WaitingScreen...");
+            navigation.replace("Waiting");
+          },
+        },
+      ]
     );
   });
 
