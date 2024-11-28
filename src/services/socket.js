@@ -1,10 +1,11 @@
+import { replace } from "./navigationService";
 import { io } from "socket.io-client";
 import { Alert } from "react-native";
 import { BASE_URL } from "@env";
 
 let socket;
 
-export const connectSocket = (uniqueId) => {
+export const connectSocket = (uniqueId, navigation) => {
   socket = io(BASE_URL, {
     reconnection: true,
     reconnectionAttempts: 5,
@@ -58,12 +59,3 @@ export const connectSocket = (uniqueId) => {
 
   return socket;
 };
-
-export const disconnectSocket = () => {
-  if (socket) {
-    socket.disconnect();
-    console.log("Socket desconectado");
-  }
-};
-
-export const getSocket = () => socket;

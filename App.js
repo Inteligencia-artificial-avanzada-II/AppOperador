@@ -11,10 +11,11 @@ import UnloadedScreen from "./src/screens/UnloadedScreen";
 import QRScan from "./src/screens/QRScanScreen";
 
 const Stack = createStackNavigator();
+import { navigationRef } from "./src/services/navigationService";
 
 export default function App() {
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Welcome" component={WelcomeScreen} />

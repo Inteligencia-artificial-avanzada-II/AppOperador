@@ -36,7 +36,8 @@ const WelcomeScreen = ({ navigation }) => {
         console.log("Socket: ", socketContenedor);
 
         // Conecta el socket utilizando el idContenedor
-        connectSocket(socketContenedor);
+        // Conecta el socket utilizando el idContenedor y navigation
+        connectSocket(socketContenedor, navigation);
 
         // Navega a la pantalla QR
         navigation.navigate("QR");
