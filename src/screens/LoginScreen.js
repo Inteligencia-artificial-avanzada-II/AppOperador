@@ -2,34 +2,39 @@ import React from "react";
 import {
   View,
   Text,
-  StyleSheet,
   Image,
   TouchableOpacity,
   ImageBackground,
 } from "react-native";
-import globalStyles from "../globalStyles";
+import globalStyles from "../globalStyles"; // Importa estilos globales para el texto
 
+/**
+ * Componente principal para la pantalla de inicio de sesión.
+ * @param {Object} navigation - Objeto de navegación proporcionado por React Navigation.
+ */
 const LoginScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      {/* Imagen de fondo utilizando ImageBackground */}
+      {/* Fondo de la pantalla con una imagen */}
       <ImageBackground
-        source={require("../../assets/background.jpg")}
+        source={require("../../assets/background.jpg")} // Ruta de la imagen de fondo
         style={styles.backgroundImage}
       >
-        {/* Vista para aplicar opacidad a la imagen */}
+        {/* Superposición oscura para mejorar la visibilidad del contenido */}
         <View style={styles.overlay} />
 
-        {/* Contenedor del login */}
+        {/* Contenedor principal del área de inicio de sesión */}
         <View style={styles.loginContainer}>
+          {/* Logo de la aplicación */}
           <Image
-            source={require("../../assets/bimboLogo.png")}
+            source={require("../../assets/bimboLogo.png")} // Ruta del logo
             style={styles.logo}
           />
+          {/* Botón para iniciar sesión */}
           <TouchableOpacity
             style={styles.button}
-            activeOpacity={0.6}
-            onPress={() => navigation.navigate("Welcome")}
+            activeOpacity={0.6} // Reduce la opacidad al presionar
+            onPress={() => navigation.navigate("Welcome")} // Navega a la pantalla de bienvenida
           >
             <Text style={[globalStyles.textBold, styles.buttonText]}>
               Iniciar Sesión
@@ -44,15 +49,15 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000", // Fondo negro para la pantalla
+    backgroundColor: "#000",
   },
   backgroundImage: {
-    flex: 1, // Permitir que la imagen ocupe todo el espacio disponible
-    justifyContent: "flex-end", // Coloca el contenido en la parte inferior
+    flex: 1,
+    justifyContent: "flex-end",
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject, // Cubre toda el área del ImageBackground
-    backgroundColor: "rgba(0, 0, 0, 0.4)", // Color negro con opacidad
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
   loginContainer: {
     backgroundColor: "#FFFFFF",
@@ -60,7 +65,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 40,
     alignItems: "center",
     padding: 5,
-    height: "30%", // Ajusta la altura para que no ocupe toda la pantalla
+    height: "30%",
   },
   logo: {
     width: 169,
@@ -81,4 +86,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginScreen;
+export default LoginScreen; // Exporta el componente para ser usado en el stack de navegación

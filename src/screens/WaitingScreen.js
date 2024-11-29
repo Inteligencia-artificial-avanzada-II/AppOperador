@@ -1,3 +1,4 @@
+// Importación de dependencias necesarias para la funcionalidad de la pantalla
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -10,74 +11,80 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { BlurView } from "expo-blur";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { consultarPuerta } from "../services/ConsultarPuertaService";
-import { actualizarStatusContenedor } from "../services/ActualizarStatusService";
-import { Ionicons } from "@expo/vector-icons";
-import { guardarPosicionPatio } from "../services/GuardarLugarPatioService";
-import { actualizarCamion } from "../services/ActualizarCamionService";
+import { BlurView } from "expo-blur"; // Efecto de desenfoque en la pantalla
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Almacenamiento local persistente
+import { consultarPuerta } from "../services/ConsultarPuertaService"; // Servicio para consultar la puerta asignada
+import { actualizarStatusContenedor } from "../services/ActualizarStatusService"; // Servicio para actualizar el estado del contenedor
+import { Ionicons } from "@expo/vector-icons"; // Biblioteca de iconos
+import { guardarPosicionPatio } from "../services/GuardarLugarPatioService"; // Servicio para guardar la posición del patio
+import { actualizarCamion } from "../services/ActualizarCamionService"; // Servicio para actualizar información del camión
 
+// Componente principal WaitingScreen
 const WaitingScreen = ({ navigation }) => {
-  const [inputText, setInputText] = useState("");
-  const [puerta, setPuerta] = useState("Sin Asignar"); // Estado inicial para mostrar la puerta
-  const [idOrden, setIdOrden] = useState(""); // Estado inicial para idOrden
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-  const keyboardOffset = useRef(new Animated.Value(0)).current; // Animación para el movimiento
-  const blurOpacity = useRef(new Animated.Value(0)).current; // Animación para el desenfoque
+  // Estados para almacenar datos y manejar la interfaz
+  const [inputText, setInputText] = useState(""); // Texto ingresado por el usuario
+  const [puerta, setPuerta] = useState("Sin Asignar"); // Estado inicial de la puerta asignada
+  const [idOrden, setIdOrden] = useState(""); // ID de la orden actual
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false); // Estado para el teclado
 
+  // Referencias para manejar animaciones
+  const keyboardOffset = useRef(new Animated.Value(0)).current; // Movimiento del teclado
+  const blurOpacity = useRef(new Animated.Value(0)).current; // Opacidad del desenfoque
+
+  // useEffect para cargar datos iniciales al montar el componente
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const idContenedor = await AsyncStorage.getItem("idContenedor");
-        const token = await AsyncStorage.getItem("userToken");
-        const storedIdOrden = await AsyncStorage.getItem("idOrden"); // Obtén idOrden desde AsyncStorage
+        const idContenedor = await AsyncStorage.getItem("idContenedor"); // Recuperar ID del contenedor
+        const token = await AsyncStorage.getItem("userToken"); // Recuperar token del usuario
+        const storedIdOrden = await AsyncStorage.getItem("idOrden"); // Recuperar ID de la orden
 
         if (!idContenedor) {
           Alert.alert("Error", "No se encontró un ID de contenedor válido.");
           return;
         }
 
-        // Asignar idOrden si existe
+        // Asignar el ID de la orden si está almacenado
         if (storedIdOrden) {
           setIdOrden(storedIdOrden);
           console.log("idOrden cargado desde AsyncStorage:", storedIdOrden);
         }
 
-        // Consultar la puerta
+        // Llamar al servicio para consultar la puerta asignada
         const response = await consultarPuerta(token, idContenedor);
         console.log("Respuesta de la API:", response);
 
-        // Si hay idPuerta, mostrar el número; si no, mantener "Sin Asignar"
+        // Si hay una puerta asignada, actualizar el estado y guardar en AsyncStorage
         if (response.idPuerta) {
           setPuerta(`${response.idPuerta}`);
-          await AsyncStorage.setItem("idPuerta", String(response.idPuerta)); // Guardar idPuerta
+          await AsyncStorage.setItem("idPuerta", String(response.idPuerta));
           console.log("idPuerta guardado en AsyncStorage:", response.idPuerta);
         } else {
           setPuerta("Sin Asignar");
         }
       } catch (error) {
-        setPuerta("Sin Asignar"); // Si falla, mostrar "Sin Asignar"
+        setPuerta("Sin Asignar"); // Manejo de errores
       }
     };
 
-    fetchData();
+    fetchData(); // Ejecutar la función de carga inicial
   }, []);
 
+  // useEffect para manejar animaciones del teclado
   useEffect(() => {
-    // Mostrar el teclado
+    // Listener para mostrar el teclado
     const keyboardShowListener = Keyboard.addListener(
       "keyboardDidShow",
       (e) => {
-        setIsKeyboardVisible(true);
+        setIsKeyboardVisible(true); // Actualizar estado
         Animated.parallel([
           Animated.timing(keyboardOffset, {
-            toValue: -e.endCoordinates.height + 50,
+            toValue: -e.endCoordinates.height + 50, // Mover la interfaz
             duration: 300,
             useNativeDriver: true,
           }),
           Animated.timing(blurOpacity, {
-            toValue: 1,
+            toValue: 1, // Incrementar opacidad del desenfoque
             duration: 300,
             useNativeDriver: true,
           }),
@@ -85,47 +92,45 @@ const WaitingScreen = ({ navigation }) => {
       }
     );
 
-    // Ocultar el teclado
+    // Listener para ocultar el teclado
     const keyboardHideListener = Keyboard.addListener("keyboardDidHide", () => {
       Animated.parallel([
         Animated.timing(keyboardOffset, {
-          toValue: 0,
+          toValue: 0, // Restaurar la interfaz
           duration: 300,
           useNativeDriver: true,
         }),
         Animated.timing(blurOpacity, {
-          toValue: 0, // Desactiva el desenfoque
+          toValue: 0, // Reducir opacidad del desenfoque
           duration: 300,
           useNativeDriver: true,
         }),
       ]).start(() => setIsKeyboardVisible(false));
     });
 
+    // Eliminar listeners al desmontar el componente
     return () => {
       keyboardShowListener.remove();
       keyboardHideListener.remove();
     };
   }, [keyboardOffset, blurOpacity]);
 
+  // Función para manejar la separación del camión
   const handleSeparation = async () => {
     try {
-      const idOrden = await AsyncStorage.getItem("idOrden");
+      const idOrden = await AsyncStorage.getItem("idOrden"); // Recuperar ID de la orden
       if (!idOrden) {
         Alert.alert("Error", "No se encontró el ID de la orden.");
-        console.error("ID de orden no encontrado en AsyncStorage.");
         return;
       }
 
-      // Llamar a la API para actualizar el camión
+      // Llamar al servicio para actualizar el camión
       const response = await actualizarCamion(idOrden);
       console.log("Respuesta de la API de actualizar camión:", response);
 
       Alert.alert("Éxito", "El camión se separó correctamente.");
     } catch (error) {
-      console.error(
-        "Error al actualizar el camión:",
-        error.response?.data || error.message
-      );
+      console.error("Error al actualizar el camión:", error.message || error);
       Alert.alert(
         "Error",
         "Hubo un problema al actualizar el estado del camión. Intenta nuevamente."
@@ -133,10 +138,12 @@ const WaitingScreen = ({ navigation }) => {
     }
   };
 
+  // Función para avanzar a la siguiente pantalla
   const handleNext = async () => {
     try {
-      const idContenedor = await AsyncStorage.getItem("idContenedor");
-      const token = await AsyncStorage.getItem("userToken");
+      const idContenedor = await AsyncStorage.getItem("idContenedor"); // Recuperar ID del contenedor
+      const token = await AsyncStorage.getItem("userToken"); // Recuperar token del usuario
+
       if (!idContenedor || !token) {
         Alert.alert(
           "Error",
@@ -145,9 +152,8 @@ const WaitingScreen = ({ navigation }) => {
         return;
       }
 
+      // Actualizar el estado del contenedor
       const nuevoStatus = "Descargando";
-
-      // Llamar a la API para actualizar el estado
       const response = await actualizarStatusContenedor(
         token,
         idContenedor,
@@ -155,10 +161,10 @@ const WaitingScreen = ({ navigation }) => {
       );
       console.log("Respuesta de la API:", response);
 
-      // Navegar a la siguiente pantalla
+      // Navegar a la pantalla de descarga
       navigation.navigate("Unloading");
     } catch (error) {
-      console.error("Error al actualizar el estado:", error);
+      console.error("Error al actualizar el estado:", error.message || error);
       Alert.alert(
         "Error",
         "Hubo un problema al actualizar el estado del contenedor."
@@ -166,35 +172,20 @@ const WaitingScreen = ({ navigation }) => {
     }
   };
 
+  // Función para guardar la posición del patio
   const handleSendMessage = async () => {
     try {
-      const token = await AsyncStorage.getItem("userToken");
-      const idOrden = await AsyncStorage.getItem("idOrden");
-      const posicionPatio = inputText.trim();
+      const token = await AsyncStorage.getItem("userToken"); // Recuperar token del usuario
+      const idOrden = await AsyncStorage.getItem("idOrden"); // Recuperar ID de la orden
+      const posicionPatio = inputText.trim(); // Limpiar texto ingresado
 
-      // Validar inputs
-      if (!token) {
-        Alert.alert("Error", "No se encontró el token.");
-        console.error("Token no encontrado en AsyncStorage.");
-        return;
-      }
-      if (!idOrden) {
-        Alert.alert("Error", "No se encontró el ID de la orden.");
-        console.error("ID de orden no encontrado en AsyncStorage.");
-        return;
-      }
-      if (!posicionPatio) {
-        Alert.alert("Error", "El campo de posición del patio está vacío.");
-        console.error("Campo de posición de patio vacío.");
+      if (!token || !idOrden || !posicionPatio) {
+        Alert.alert("Error", "Faltan datos para procesar la solicitud.");
         return;
       }
 
-      // Llamar a la API
-      const response = await guardarPosicionPatio(
-        token,
-        idOrden,
-        posicionPatio
-      );
+      // Llamar al servicio para guardar la posición
+      const response = await guardarPosicionPatio(token, idOrden, posicionPatio);
       console.log("Respuesta de la API:", response);
 
       Alert.alert("Éxito", "La posición del patio se guardó correctamente.");
@@ -202,45 +193,39 @@ const WaitingScreen = ({ navigation }) => {
     } catch (error) {
       console.error(
         "Error al guardar la posición del patio:",
-        error.response?.data || error.message
+        error.message || error
       );
       Alert.alert(
         "Error",
-        "Hubo un problema al enviar la posición del patio. Intenta nuevamente."
+        "Hubo un problema al enviar la posición del patio."
       );
     }
   };
 
   return (
+    // Estructura de la pantalla, incluyendo desenfoque y botones
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        {/* BlurView animado para el desenfoque */}
         {isKeyboardVisible && (
           <Animated.View
             style={[
               styles.blurContainer,
-              { opacity: blurOpacity }, // Cambia la opacidad del desenfoque
+              { opacity: blurOpacity }, // Cambiar opacidad
             ]}
           >
             <BlurView intensity={50} style={styles.blurView} />
           </Animated.View>
         )}
-
-        {/* Contenedor para el título y el número de placas */}
         <View style={styles.headerContainer}>
           <Text style={styles.title}>En espera</Text>
           <Text style={styles.plateNumber}>
             {idOrden ? `Orden: ${idOrden}` : ""}
           </Text>
         </View>
-
-        {/* Contenedor para la información de la puerta */}
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>Puerta</Text>
           <Text style={styles.infoTextBold}>{puerta}</Text>
         </View>
-
-        {/* Mostrar el campo de entrada solo si no hay puerta */}
         {puerta === "Sin Asignar" && (
           <Animated.View
             style={[
@@ -266,8 +251,6 @@ const WaitingScreen = ({ navigation }) => {
                 <Ionicons name="send" size={24} color="#0033cc" />
               </TouchableOpacity>
             </View>
-
-            {/* Botón adicional cuando se muestra el input */}
             <TouchableOpacity
               style={[styles.secondButtonContainer, { marginTop: 20 }]}
               onPress={handleSeparation}
@@ -278,8 +261,6 @@ const WaitingScreen = ({ navigation }) => {
             </TouchableOpacity>
           </Animated.View>
         )}
-
-        {/* Mostrar botón si hay puerta asignada */}
         {puerta !== "Sin Asignar" && (
           <TouchableOpacity style={styles.buttonContainer} onPress={handleNext}>
             <Text style={styles.buttonText}>Siguiente</Text>
@@ -290,6 +271,7 @@ const WaitingScreen = ({ navigation }) => {
   );
 };
 
+// Estilos para la interfaz de usuario
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -300,8 +282,8 @@ const styles = StyleSheet.create({
     paddingTop: 150,
   },
   blurContainer: {
-    ...StyleSheet.absoluteFillObject, // Ocupa toda la pantalla
-    zIndex: 1, // Asegura que el desenfoque esté encima
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
   },
   blurView: {
     flex: 1,

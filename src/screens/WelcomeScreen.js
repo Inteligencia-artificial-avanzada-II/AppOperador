@@ -2,37 +2,46 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TextInput,
   TouchableOpacity,
   Alert,
 } from "react-native";
-import globalStyles from "../globalStyles";
-import { Ionicons } from "@expo/vector-icons";
-import { loginContenedor } from "../services/AuthService";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { connectSocket } from "../services/socket"; // Importa la función para conectar el socket
+import globalStyles from "../globalStyles"; // Importa estilos globales
+import { Ionicons } from "@expo/vector-icons"; // Para mostrar íconos de visibilidad de contraseña
+import { loginContenedor } from "../services/AuthService"; // Función para manejar el inicio de sesión
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Manejo del almacenamiento local
+import { connectSocket } from "../services/socket"; // Función para conectar sockets
 
+/**
+ * Pantalla de bienvenida donde los usuarios inician sesión.
+ * @param {Object} navigation - Objeto de navegación proporcionado por React Navigation.
+ */
 const WelcomeScreen = ({ navigation }) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState(""); // Estado para el correo electrónico del usuario
+  const [password, setPassword] = useState(""); // Estado para la contraseña
+  const [showPassword, setShowPassword] = useState(false); // Estado para mostrar u ocultar la contraseña
 
+  /**
+   * Maneja el proceso de inicio de sesión.
+   * - Valida las credenciales del usuario.
+   * - Guarda el token y el ID del contenedor en AsyncStorage.
+   * - Establece la conexión del socket y navega a la pantalla QR.
+   */
   const handleLoging = async () => {
     try {
-      const data = await loginContenedor(email, password);
+      const data = await loginContenedor(email, password); // Llama al servicio de autenticación
       console.log("Data: ", data);
 
       if (data.data.isValid) {
-        console.log("Token: ", data.data.token);
         const token = data.data.token;
         const idContenedor = data.data.idContenedor;
 
-        // Guarda el token y el idContenedor en AsyncStorage
+        // Almacena el token y el ID del contenedor localmente
         await AsyncStorage.setItem("userToken", token);
         await AsyncStorage.setItem("idContenedor", String(idContenedor));
 
-        const socketContenedor = String("contenedor-" + idContenedor);
+        // Conecta al socket utilizando el ID del contenedor
+        const socketContenedor = `contenedor-${idContenedor}`;
         console.log("Socket: ", socketContenedor);
 
         // Conecta el socket utilizando el idContenedor
@@ -42,10 +51,12 @@ const WelcomeScreen = ({ navigation }) => {
         // Navega a la pantalla QR
         navigation.navigate("QR");
       } else {
+        // Muestra una alerta si las credenciales son inválidas
         Alert.alert("Error", data.message);
       }
     } catch (error) {
       console.log("Error de la solicitud: ", error);
+      // Muestra una alerta si hay un problema con la solicitud
       Alert.alert(
         "Error",
         "Las credenciales ingresadas son incorrectas o hubo un problema con el servidor"
@@ -55,6 +66,7 @@ const WelcomeScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {/* Botón para regresar a la pantalla anterior */}
       <View style={styles.containerBack}>
         <TouchableOpacity
           style={styles.backButton}
@@ -63,10 +75,13 @@ const WelcomeScreen = ({ navigation }) => {
           <Text style={styles.backButtonText}>{"<"}</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Título de la pantalla */}
       <Text style={[globalStyles.textBold, styles.title]}>
         ¡Bienvenido de{"\n"}nuevo!
       </Text>
 
+      {/* Campo de entrada para el correo electrónico */}
       <TextInput
         style={styles.input}
         placeholder="Ingresa tu correo"
@@ -74,27 +89,30 @@ const WelcomeScreen = ({ navigation }) => {
         value={email}
         onChangeText={setEmail}
       />
+
+      {/* Contenedor para la contraseña y el botón de visibilidad */}
       <View style={styles.passwordContainer}>
         <TextInput
           style={styles.inputPassword}
           placeholder="Ingresa tu contraseña"
           placeholderTextColor="#aaa"
-          secureTextEntry={!showPassword}
+          secureTextEntry={!showPassword} // Oculta la contraseña si `showPassword` es false
           value={password}
           onChangeText={setPassword}
         />
-
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
           <Ionicons
-            name={showPassword ? "eye" : "eye-off"}
+            name={showPassword ? "eye" : "eye-off"} // Cambia el ícono según el estado de visibilidad
             size={24}
             color="#6A707C"
           />
         </TouchableOpacity>
       </View>
 
+      {/* Texto de "Olvidaste tu contraseña" */}
       <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
 
+      {/* Botón para iniciar sesión */}
       <TouchableOpacity style={styles.button} onPress={handleLoging}>
         <Text style={[globalStyles.textBold, styles.buttonText]}>
           Iniciar Sesión
